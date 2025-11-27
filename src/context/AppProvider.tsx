@@ -1,21 +1,24 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import type { Document, FamilyMember } from '../types';
+import type { Document, Employee, AdminSettings } from '../types';
 
 interface AppContextType {
     documents: Document[];
-    familyMembers: FamilyMember[];
+    employees: Employee[];
     addDocument: (doc: Document) => void;
     updateDocument: (doc: Document) => void;
     deleteDocument: (id: string) => void;
-    addFamilyMember: (member: FamilyMember) => void;
-    deleteFamilyMember: (id: string) => void;
+    addEmployee: (member: Employee) => void;
+    deleteEmployee: (id: string) => void;
+    adminSettings: AdminSettings;
+    updateAdminSettings: (settings: AdminSettings) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const STORAGE_KEY_DOCS = 'visa_tracker_docs';
-const STORAGE_KEY_FAMILY = 'visa_tracker_family';
+const STORAGE_KEY_EMPLOYEES = 'visa_tracker_employees';
+const STORAGE_KEY_ADMIN = 'visa_tracker_admin';
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [documents, setDocuments] = useState<Document[]>(() => {
@@ -23,11 +26,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return saved ? JSON.parse(saved) : [];
     });
 
-    const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>(() => {
-        const saved = localStorage.getItem(STORAGE_KEY_FAMILY);
+    const [employees, setEmployees] = useState<Employee[]>(() => {
+        const saved = localStorage.getItem(STORAGE_KEY_EMPLOYEES);
         return saved ? JSON.parse(saved) : [
-            { id: '1', name: 'Me', relation: 'Self' } // Default member
+            { id: '1', name: 'Me', role: 'Admin' } // Default member
         ];
+    });
+
+    const [adminSettings, setAdminSettings] = useState<AdminSettings>(() => {
+        const saved = localStorage.getItem(STORAGE_KEY_ADMIN);
+        return saved ? JSON.parse(saved) : {
+            contacts: [],
+            autoReminders: false,
+            lastReminderDate: null
+        };
     });
 
     useEffect(() => {
@@ -35,8 +47,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, [documents]);
 
     useEffect(() => {
-        localStorage.setItem(STORAGE_KEY_FAMILY, JSON.stringify(familyMembers));
-    }, [familyMembers]);
+        localStorage.setItem(STORAGE_KEY_EMPLOYEES, JSON.stringify(employees));
+    }, [employees]);
+
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY_ADMIN, JSON.stringify(adminSettings));
+    }, [adminSettings]);
 
     const addDocument = (doc: Document) => {
         setDocuments(prev => [...prev, doc]);
@@ -50,23 +66,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setDocuments(prev => prev.filter(d => d.id !== id));
     };
 
-    const addFamilyMember = (member: FamilyMember) => {
-        setFamilyMembers(prev => [...prev, member]);
+    const addEmployee = (member: Employee) => {
+        setEmployees(prev => [...prev, member]);
     };
 
-    const deleteFamilyMember = (id: string) => {
-        setFamilyMembers(prev => prev.filter(m => m.id !== id));
+    const deleteEmployee = (id: string) => {
+        setEmployees(prev => prev.filter(m => m.id !== id));
+    };
+
+    const updateAdminSettings = (settings: AdminSettings) => {
+        setAdminSettings(settings);
     };
 
     return (
         <AppContext.Provider value={{
             documents,
-            familyMembers,
+            employees,
+            adminSettings,
             addDocument,
             updateDocument,
             deleteDocument,
-            addFamilyMember,
-            deleteFamilyMember
+            addEmployee,
+            deleteEmployee,
+            updateAdminSettings
         }}>
             {children}
         </AppContext.Provider>

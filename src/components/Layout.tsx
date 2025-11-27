@@ -1,6 +1,7 @@
 import React from 'react';
-import { LayoutDashboard, FileText, Users, Calendar, Menu, X } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, Calendar, Menu, X, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -10,13 +11,18 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+    const { signOut } = useAuth();
 
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'documents', label: 'Documents', icon: FileText },
-        { id: 'family', label: 'Family', icon: Users },
+        { id: 'employees', label: 'Employees', icon: Users },
         { id: 'calendar', label: 'Calendar', icon: Calendar },
     ];
+
+    const handleSignOut = async () => {
+        await signOut();
+    };
 
     return (
         <div className="min-h-screen flex text-slate-800 font-sans">
@@ -41,9 +47,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
             >
                 <div className="p-8">
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
-                        VisaTracker
+                        DOC Tracker
                     </h1>
-                    <p className="text-xs text-slate-500 mt-1 font-medium tracking-wide uppercase">Family Document Manager</p>
+                    <p className="text-xs text-slate-500 mt-1 font-medium tracking-wide uppercase">Document Manager</p>
                 </div>
 
                 <nav className="flex-1 px-4 space-y-2">
@@ -55,8 +61,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                                 setIsMobileMenuOpen(false);
                             }}
                             className={`w-full flex items-center px-4 py-3.5 rounded-xl transition-all duration-200 group relative overflow-hidden ${activeTab === item.id
-                                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30'
-                                    : 'text-slate-600 hover:bg-white/50 hover:text-indigo-600'
+                                ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30'
+                                : 'text-slate-600 hover:bg-white/50 hover:text-indigo-600'
                                 }`}
                         >
                             <item.icon size={20} className={`mr-3 ${activeTab === item.id ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600'}`} />
@@ -74,13 +80,21 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                     ))}
                 </nav>
 
-                <div className="p-6">
+                <div className="p-6 space-y-4">
                     <div className="bg-gradient-to-br from-indigo-50 to-violet-50 p-4 rounded-xl border border-indigo-100/50">
                         <p className="text-xs text-indigo-600 font-semibold mb-1">Pro Tip</p>
                         <p className="text-xs text-slate-600 leading-relaxed">
                             Upload photos of your documents to keep a digital backup safe.
                         </p>
                     </div>
+
+                    <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center px-4 py-3 rounded-xl text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-colors group"
+                    >
+                        <LogOut size={20} className="mr-3 text-slate-400 group-hover:text-rose-500" />
+                        <span className="font-medium">Sign Out</span>
+                    </button>
                 </div>
             </motion.div>
 

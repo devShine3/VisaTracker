@@ -1,17 +1,30 @@
-export type DocType = 'Emirates ID' | 'Visa' | 'Passport' | 'Car Registration' | 'Car Insurance' | 'Health Insurance' | 'Other';
+export type DocType = 'Emirates ID' | 'Visa' | 'Passport' | 'Car Registration' | 'Car Insurance' | 'Health Insurance' | 'Driving License' | 'ID Card' | 'Other';
 
-export interface FamilyMember {
+export interface Employee {
     id: string;
     name: string;
-    relation: string; // 'Self', 'Spouse', 'Child', etc.
+    role: string; // 'Manager', 'Developer', 'Designer', etc.
 }
 
 export interface Document {
     id: string;
     type: DocType;
-    name: string; // e.g., "Dad's Visa"
+    name: string; // e.g., "John's Visa"
     expiryDate: string; // ISO date YYYY-MM-DD
     memberId: string;
-    photo?: string; // DataURL or link
     notes?: string;
+    photo?: string;
+}
+
+export interface AdminContact {
+    id: string;
+    label: string; // e.g., "My Personal Mobile"
+    type: 'whatsapp' | 'email';
+    value: string;
+}
+
+export interface AdminSettings {
+    contacts: AdminContact[];
+    autoReminders: boolean;
+    lastReminderDate: string | null; // ISO date YYYY-MM-DD
 }

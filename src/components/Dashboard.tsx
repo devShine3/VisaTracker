@@ -1,11 +1,19 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppProvider';
 import { getDaysRemaining, getExpiryStatus, formatDate, getStatusColor } from '../utils/dateUtils';
-import { AlertTriangle, CheckCircle, Clock, FileText } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, FileText, Settings, Send } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { SettingsModal } from './SettingsModal';
+import { ReportModal } from './ReportModal';
 
-export const Dashboard: React.FC = () => {
-    const { documents } = useApp();
+interface DashboardProps {
+    onNavigate: (tab: string, filter?: string) => void;
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
+    const { documents, adminSettings } = useApp();
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isReportOpen, setIsReportOpen] = useState(false);
 
     const stats = documents.reduce((acc, doc) => {
         const days = getDaysRemaining(doc.expiryDate);
@@ -25,6 +33,20 @@ export const Dashboard: React.FC = () => {
             return days <= 90;
         })
         .sort((a, b) => getDaysRemaining(a.expiryDate) - getDaysRemaining(b.expiryDate));
+
+    // Auto-Check Logic
+    useEffect(() => {
+        if (adminSettings.autoReminders) {
+            const today = new Date().toISOString().split('T')[0];
+            const hasAlerts = stats.critical > 0 || stats.warning > 0 || stats.expired > 0;
+
+            if (hasAlerts && adminSettings.lastReminderDate !== today) {
+                // Small delay to ensure smooth loading
+                const timer = setTimeout(() => setIsReportOpen(true), 1000);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [adminSettings, stats]);
 
     const container = {
         hidden: { opacity: 0 },
@@ -48,9 +70,26 @@ export const Dashboard: React.FC = () => {
             initial="hidden"
             animate="show"
         >
-            <motion.div variants={item}>
-                <h2 className="text-4xl font-bold text-slate-800 tracking-tight">Dashboard</h2>
-                <p className="text-slate-500 mt-2 text-lg">Overview of your family's document status</p>
+            <motion.div variants={item} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 className="text-4xl font-bold text-slate-800 tracking-tight">Dashboard</h2>
+                    <p className="text-slate-500 mt-2 text-lg">Overview of your team's document status</p>
+                </div>
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => setIsReportOpen(true)}
+                        className="btn-primary px-4 py-2.5 rounded-xl flex items-center gap-2 font-medium shadow-lg shadow-indigo-500/20"
+                    >
+                        <Send size={20} />
+                        Send Admin Report
+                    </button>
+                    <button
+                        onClick={() => setIsSettingsOpen(true)}
+                        className="p-2.5 bg-white text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-xl border border-slate-200 transition-colors shadow-sm"
+                    >
+                        <Settings size={24} />
+                    </button>
+                </div>
             </motion.div>
 
             {/* Stats Grid */}
@@ -61,6 +100,7 @@ export const Dashboard: React.FC = () => {
                     icon={<FileText size={24} />}
                     color="indigo"
                     delay={0}
+                    onClick={() => onNavigate('documents', 'all')}
                 />
                 <StatsCard
                     title="Critical (< 30 days)"
@@ -68,6 +108,7 @@ export const Dashboard: React.FC = () => {
                     icon={<AlertTriangle size={24} />}
                     color="rose"
                     delay={0.1}
+                    onClick={() => onNavigate('documents', 'critical')}
                 />
                 <StatsCard
                     title="Warning (< 90 days)"
@@ -75,6 +116,7 @@ export const Dashboard: React.FC = () => {
                     icon={<Clock size={24} />}
                     color="amber"
                     delay={0.2}
+                    onClick={() => onNavigate('documents', 'warning')}
                 />
                 <StatsCard
                     title="Good Status"
@@ -82,6 +124,7 @@ export const Dashboard: React.FC = () => {
                     icon={<CheckCircle size={24} />}
                     color="emerald"
                     delay={0.3}
+                    onClick={() => onNavigate('documents', 'good')}
                 />
             </div>
 
@@ -140,11 +183,14 @@ export const Dashboard: React.FC = () => {
                     </table>
                 </div>
             </motion.div>
+
+            {isSettingsOpen && <SettingsModal onClose={() => setIsSettingsOpen(false)} />}
+            {isReportOpen && <ReportModal onClose={() => setIsReportOpen(false)} />}
         </motion.div>
     );
 };
 
-const StatsCard = ({ title, value, icon, color, delay }: { title: string, value: number, icon: React.ReactNode, color: string, delay: number }) => {
+const StatsCard = ({ title, value, icon, color, delay, onClick }: { title: string, value: number, icon: React.ReactNode, color: string, delay: number, onClick?: () => void }) => {
     const colorClasses: Record<string, string> = {
         indigo: 'bg-indigo-50 text-indigo-600',
         rose: 'bg-rose-50 text-rose-600',
@@ -169,7 +215,10 @@ const StatsCard = ({ title, value, icon, color, delay }: { title: string, value:
                     transition: { delay }
                 }
             }}
-            className="glass-card p-6 rounded-2xl relative overflow-hidden group"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onClick}
+            className={`glass-card p-6 rounded-2xl relative overflow-hidden group cursor-pointer transition-all duration-300 hover:shadow-xl ${onClick ? 'cursor-pointer' : ''}`}
         >
             <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500 ${textColors[color]}`}>
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
